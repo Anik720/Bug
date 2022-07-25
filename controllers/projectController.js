@@ -1,7 +1,9 @@
+const Space = require("../models/spaceModel");
 const Project = require("../models/projectModel");
 const AppError = require("./../utils/appError");
 const Bug = require("./../models/bugModel");
 const factory = require("./handlerFactory");
+const { MongoClient, ObjectId } = require("mongodb");
 
 exports.getProjectUnderPM = async (req, res, next) => {
   const email = req.query.email;
@@ -24,17 +26,27 @@ exports.getProjecttype = async (req, res, next) => {
 };
 
 exports.getProjectType = async (req, res, next) => {
-  const type = req.query.project_type;
+  const type = req.query.space_id;
+  const project = req.query.project_id;
 
-  const projects = await Project.find({});
-  //console.log(projects);
+  // const spaces = await Space.find({});
+  let projects = [];
 
-  const arr = projects.filter((x) => {
-    return JSON.stringify(x.space._id) === JSON.stringify(type);
-    console.log();
-  });
+  if (project) {
+    projects = await Project.find({ space: type, _id: project }).populate([
+      "space",
+      "bugg",
+    ]);
+  } else {
+    projects = await Project.find({ space: type }).populate(["space", "bugg"]);
+  }
+  console.log(projects);
 
-  console.log(arr);
+  // const arr = projects.filter((x) => {
+  //   return JSON.stringify(x.space._id) === JSON.stringify(type);
+  // });
+
+  console.log();
 
   //console.log(bugs);
   // const commercial = projects.filter((x) => {
@@ -67,7 +79,7 @@ exports.getProjectType = async (req, res, next) => {
   //   data = internal;
   // }
   res.status(200).json({
-    data: arr,
+    data: projects,
   });
 };
 

@@ -14,7 +14,7 @@ router.route("/filterbytype").get(projectController.getProjectType);
 
 router
   .route("/")
-  .get(projectController.getAllProject)
+  .get(protect,restrictTo("project_manager") ,projectController.getAllProject)
   .post(
     
     projectController.careteProject

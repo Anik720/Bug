@@ -15,6 +15,7 @@ const authRoutes = require("./routers/authRoutes");
 const projectRoutes = require("./routers/projectRoutes");
 const bugRoutes = require("./routers/bugRoutes");
 const spacesRoutes = require("./routers/spacesRoutes");
+const logsRoute = require("./routers/logsRoute");
 
 const globalErrorHandler = require("./middlewares/globalErrorHandler");
 
@@ -81,6 +82,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/v1/projects", projectRoutes);
 app.use("/api/v1/bugs", bugRoutes);
 app.use("/api/v1/spaces", spacesRoutes);
+app.use("/api/v1/logs", logsRoute);
 
 // handling all (get,post,update,delete.....) unhandled routes
 app.all("*", (req, res, next) => {

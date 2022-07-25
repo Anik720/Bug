@@ -20,7 +20,6 @@ router
 router
   .route("/:id")
   .get(bugController.getBug)
-  .patch( protect,
-    restrictTo("project_manager"),bugController.updateBug)
+  .patch(protect, restrictTo("project_manager"), bugController.updateBug)
   .delete(bugController.deleteBug);
 module.exports = router;

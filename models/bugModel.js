@@ -43,6 +43,7 @@ const bugSchema = new mongoose.Schema(
 bugSchema.pre(/^find/, function (next) {
   this.populate({
     path: "project",
+
   });
 
   next();

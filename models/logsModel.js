@@ -1,43 +1,57 @@
 const mongoose = require("mongoose");
 
 const logSchema = new mongoose.Schema(
-{
+  {
     currentStatus: {
-        type: String,
-        required: true,
-      },
+      type: String,
+    },
     previousStatus: {
-        type: String,
-        required: true,
-      },
+      type: String,
+      required: true,
+    },
     currentPriority: {
-        type: String,
-        required: true,
-      },
+      type: String,
+    },
     previousPriority: {
-        type: String,
-        required: true,
-      },
-      bug: {
-        type: mongoose.Schema.ObjectId,
-        ref: "Bug",
-      },
-      
+      type: String,
+      required: true,
+    },
 
-}
-  
+    comment: {
+      type: String,
+    },
+
+    bug: {
+      type: mongoose.Schema.ObjectId,
+      ref: "Bug",
+    },
+    logUer: {
+      type: mongoose.Schema.ObjectId,
+      ref: "User",
+    },
+  },
+  {
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  }
 );
 
-// spaceSchema.pre(/^find/, function (next) {
-//   this.populate({
-//     path: "createdBy",
-//     select: "-__v -user",
-//   });
+logSchema.pre(/^find/, function (next) {
+  this.populate({
+    path: "bug",
+  });
 
-//   next();
-// });
+  next();
+});
+logSchema.pre(/^find/, function (next) {
+  this.populate({
+    path: "logUer",
+  });
 
-// spaceSchema.virtual("spaces", {
+  next();
+});
+
+// logSchema.virtual("spaces", {
 //   ref: "Project",
 //   foreignField: "space",
 //   localField: "_id",
