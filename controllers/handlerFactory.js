@@ -18,18 +18,22 @@ exports.deleteOne = (Model) =>
 
 exports.updateOne = (Model) =>
   catchAsync(async (req, res, next) => {
-    // const newUsers = req.body.users;
+    // if (req.body.users) {
+    //   const newUsers = req.body.users;
 
-    // const previousUser =await Model.findById(req.params.id);
-    //  const a= JSON.stringify(...previousUser.users);
-    //  console.log(a.split(" ").pop())
-    // let newUserss=[...newUsers, a]
-    //  console.log(newUserss) ;
+    //   const previousUser = await Model.findById(req.params.id);
+    //   const a = JSON.stringify();
+    //   const b = a;
+
+    //   let newUserss = [...newUsers, ...previousUser.users.toString().split()];
+    //   console.log(newUserss);
+    // }
+
     const doc = await Model.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
     });
-
+    console.log(doc);
     if (!doc) {
       return next(new AppError("No document found with that ID", 404));
     }

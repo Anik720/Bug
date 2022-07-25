@@ -26,9 +26,15 @@ exports.getProjecttype = async (req, res, next) => {
 exports.getProjectType = async (req, res, next) => {
   const type = req.query.project_type;
 
-  const projects = await Project.find({ type }).populate({ path: "bugg" });
+  const projects = await Project.find({});
+  //console.log(projects);
 
-  //console.log(doc);
+  const arr = projects.filter((x) => {
+    return JSON.stringify(x.space._id) === JSON.stringify(type);
+    console.log();
+  });
+
+  console.log(arr);
 
   //console.log(bugs);
   // const commercial = projects.filter((x) => {
@@ -61,33 +67,39 @@ exports.getProjectType = async (req, res, next) => {
   //   data = internal;
   // }
   res.status(200).json({
-    data: projects,
+    data: arr,
   });
 };
 
-// exports.updateProject  =(req,res,next)=>{
-// const id=req.params.id
+exports.updateProject = async (req, res, next) => {
+  const newUsers = req.body.users;
 
+  const previousUser = await Project.findById(req.params.id);
+  const a = JSON.stringify();
+  const b = a;
+  console.log(previousUser);
+  let newUserss = [...newUsers, ...previousUser.users];
+  console.log(newUserss);
 
+  req.body.users = newUserss;
 
+  const doc = await Project.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+    runValidators: true,
+  });
 
-//   const doc = await Project.findByIdAndUpdate(req.params.id, req.body, {
-//     new: true,
-//     runValidators: true,
-//   });
+  if (!doc) {
+    return next(new AppError("No document found with that ID", 404));
+  }
 
-//   if (!doc) {
-//     return next(new AppError("No document found with that ID", 404));
-//   }
+  res.status(200).json({
+    status: "success",
 
-//   res.status(200).json({
-//     status: "success",
-
-//     data: doc,
-//   });
-// }
+    data: doc,
+  });
+};
 exports.getAllProject = factory.getAll(Project);
 exports.careteProject = factory.createOne(Project);
 exports.getProject = factory.getOne(Project, { path: "bugg" });
-exports.updateProject = factory.updateOne(Project);
+//exports.updateProject = factory.updateOne(Project);
 exports.deleteProject = factory.deleteOne(Project);
