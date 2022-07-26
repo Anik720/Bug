@@ -7,14 +7,14 @@ const logSchema = new mongoose.Schema(
     },
     previousStatus: {
       type: String,
-      required: true,
+      required: [true, "Please give previousStatus!"],
     },
     currentPriority: {
       type: String,
     },
     previousPriority: {
       type: String,
-      required: true,
+      required: [true, "Please give previousPriority!"],
     },
 
     comment: {
@@ -25,14 +25,13 @@ const logSchema = new mongoose.Schema(
       type: mongoose.Schema.ObjectId,
       ref: "Bug",
     },
-    logUer: {
+    logUser: {
       type: mongoose.Schema.ObjectId,
       ref: "User",
     },
   },
   {
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true },
+    timestamps: true,
   }
 );
 
@@ -45,7 +44,7 @@ logSchema.pre(/^find/, function (next) {
 });
 logSchema.pre(/^find/, function (next) {
   this.populate({
-    path: "logUer",
+    path: "logUser",
   });
 
   next();

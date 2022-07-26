@@ -10,7 +10,8 @@ const restrictTo = require("../middlewares/restrictTo");
 
 router.route("/project").get(projectController.getProjectUnderPM);
 //router.route("/projecttype").get(projectController.getProjecttype);
-router.route("/filterbytype").get(projectController.getProjectType);
+router.route("/filterbytype").get(protect,projectController.getProjectType);
+router.route("/getprojectsbyloggedinuser").get(protect,projectController.getProjectsByLoggedinUser);
 
 router
   .route("/")

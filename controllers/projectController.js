@@ -1,11 +1,12 @@
 const Space = require("../models/spaceModel");
 const Project = require("../models/projectModel");
 const AppError = require("./../utils/appError");
+const catchAsync = require("./../utils/catchAsync");
 const Bug = require("./../models/bugModel");
 const factory = require("./handlerFactory");
 const { MongoClient, ObjectId } = require("mongodb");
 
-exports.getProjectUnderPM = async (req, res, next) => {
+exports.getProjectUnderPM = catchAsync(async (req, res, next) => {
   const email = req.query.email;
 
   const project = await Project.find();
@@ -17,28 +18,41 @@ exports.getProjectUnderPM = async (req, res, next) => {
     message: "Success",
     data: result,
   });
-};
+});
 
-exports.getProjecttype = async (req, res, next) => {
+exports.getProjecttype = catchAsync(async (req, res, next) => {
   const projects = await Project.find({}).distinct("type");
 
   res.status(200).json({ data: projects });
-};
+});
 
-exports.getProjectType = async (req, res, next) => {
+exports.getProjectType = catchAsync(async (req, res, next) => {
   const type = req.query.space_id;
   const project = req.query.project_id;
+  const userId = req.query.user_id;
+  console.log("Hello", userId);
 
   // const spaces = await Space.find({});
   let projects = [];
 
-  if (project) {
-    projects = await Project.find({ space: type, _id: project }).populate([
-      "space",
-      "bugg",
-    ]);
+  if (!userId) {
+    if (project) {
+      projects = await Project.find({
+        space: type,
+        _id: project,
+      }).populate(["space", "bugg"]);
+    } else {
+      projects = await Project.find({ space: type }).populate([
+        "space",
+        "bugg",
+      ]);
+    }
   } else {
-    projects = await Project.find({ space: type }).populate(["space", "bugg"]);
+    projects = await Project.find({
+      space: type,
+
+      createdBy: userId,
+    }).populate(["space", "bugg"]);
   }
   console.log(projects);
 
@@ -81,9 +95,30 @@ exports.getProjectType = async (req, res, next) => {
   res.status(200).json({
     data: projects,
   });
-};
+});
 
-exports.updateProject = async (req, res, next) => {
+exports.getProjectsByLoggedinUser = catchAsync(async (req, res, next) => {
+  const userId = req.user._id;
+  console.log("hello", userId);
+
+  const projects = await Project.find({ createdBy: userId }).populate(
+    "createdBy"
+  );
+  let arr;
+  arr = projects;
+
+  if (projects.length === 0) {
+    const project = await Project.find({ users: userId });
+    arr = project;
+  }
+  console.log(projects);
+  res.status(200).json({
+    message: "success",
+    data: arr,
+  });
+});
+
+exports.updateProject = catchAsync(async (req, res, next) => {
   const newUsers = req.body.users;
 
   const previousUser = await Project.findById(req.params.id);
@@ -109,7 +144,7 @@ exports.updateProject = async (req, res, next) => {
 
     data: doc,
   });
-};
+});
 exports.getAllProject = factory.getAll(Project);
 exports.careteProject = factory.createOne(Project);
 exports.getProject = factory.getOne(Project, { path: "bugg" });
