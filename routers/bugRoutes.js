@@ -8,6 +8,7 @@ const authController = require("../controllers/authController");
 const protect = require("../middlewares/protect");
 const restrictTo = require("../middlewares/restrictTo");
 
+router.route("/adduser/:id").patch(protect, bugController.addUser);
 router
   .route("/getallbugsunderprojectmanager")
   .get(protect, bugController.getAllBugsUnderProjectManager);
@@ -15,7 +16,7 @@ router
 router
   .route("/")
   .get(bugController.getAllBug)
-  .post(protect, restrictTo("project_manager"), bugController.createBug);
+  .post(protect, bugController.createBug);
 
 router
   .route("/:id")

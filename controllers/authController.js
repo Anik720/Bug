@@ -105,7 +105,7 @@ const signToken = (id) => {
   });
 };
 
-const createSendToken = (user, statusCode, res) => {
+const createSendToken = catchAsync((user, statusCode, res) => {
   const token = signToken(user._id);
   const cookieOptions = {
     expires: new Date(
@@ -119,7 +119,11 @@ const createSendToken = (user, statusCode, res) => {
 
   // Remove password from output
   user.password = undefined;
-
+  if (!user) {
+    res.status(statusCode).json({
+      status: "failed",
+    });
+  }
   res.status(statusCode).json({
     status: "success",
     token,
@@ -127,18 +131,17 @@ const createSendToken = (user, statusCode, res) => {
       user,
     },
   });
-};
+});
 
 exports.signup = catchAsync(async (req, res, next) => {
-
-  console.log(req.body.email)
+  console.log(req.body.email);
   const newUser = await User.create({
     name: req.body.name,
     email: req.body.email,
     password: req.body.password,
     passwordConfirm: req.body.passwordConfirm,
   });
- // const url = `${req.protocol}://${req.get("host")}/me`;
+  // const url = `${req.protocol}://${req.get("host")}/me`;
   //console.log(url);
   //await new Email(newUser, url).sendWelcome();
 

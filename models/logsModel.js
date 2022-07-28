@@ -4,19 +4,32 @@ const logSchema = new mongoose.Schema(
   {
     currentStatus: {
       type: String,
+      default:null
     },
     previousStatus: {
       type: String,
-      required: [true, "Please give previousStatus!"],
+      default:null
     },
     currentPriority: {
       type: String,
+      default:null
     },
     previousPriority: {
       type: String,
-      required: [true, "Please give previousPriority!"],
+      default: null,
     },
-
+    currentDeadline: {
+      type: String,
+      default: null,
+    },
+    previousDeadline: {
+      type: String,
+      default: null,
+    },
+    addedUser: {
+      type: mongoose.Schema.ObjectId,
+      ref: "User",
+    },
     comment: {
       type: String,
     },
@@ -35,16 +48,23 @@ const logSchema = new mongoose.Schema(
   }
 );
 
+// logSchema.pre(/^find/, function (next) {
+//   this.populate({
+//     path: "bug",
+//   });
+
+//   next();
+// });
 logSchema.pre(/^find/, function (next) {
   this.populate({
-    path: "bug",
+    path: "logUser",
   });
 
   next();
 });
 logSchema.pre(/^find/, function (next) {
   this.populate({
-    path: "logUser",
+    path: "addedUser",
   });
 
   next();

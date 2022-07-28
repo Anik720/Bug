@@ -24,6 +24,48 @@ exports.getAllBugsUnderProjectManager = catchAsync(async (req, res, next) => {
 
   res.status(200).json({ data: arr });
 });
+exports.addUser = catchAsync(async (req, res, next) => {
+  const newUsers = req.body.users;
+  //console.log(newUsers);
+
+  const bug = await Bug.findById(req.params.id);
+  // const data = await bugModel.findById({ _id: req.params.id });
+  // const { status, priority, deadline ,} = data;
+  let doc;
+  // console.log(bug.users)
+  // console.log()
+let index=bug.users.findIndex(user =>JSON.stringify(user._id)  === JSON.stringify(newUsers) )
+console.log("Hello",index)
+
+  if (index  === -1) {
+    // const data=[users,doc.users]
+
+    const updateUsers = [...bug.users, newUsers];
+    console.log("true")
+    // req.body.users =  updateUsers;
+    doc = bug;
+    doc.users = updateUsers;
+    doc.save();
+    const log = await logsModel.create({ addedUser: req.body.users ,logUser:req.user._id,bug:req.params.id});
+
+    if (!doc) {
+      return next(new AppError("No document found with that ID", 404));
+    }
+    return res.status(200).json({
+      status: "Success",
+
+      data: doc,
+    });
+  } else {
+    console.log("false")
+    doc = bug;
+    return res.status(501).json({
+      status: "User already availabe!",
+
+      data: doc,
+    });
+  }
+});
 
 // exports.getAllBug=catchAsync(async(req,res,next)=>{
 // const bug=req.query.bug_id;
@@ -63,7 +105,7 @@ exports.updateBug = catchAsync(async (req, res, next) => {
   const user_id = req.user._id;
   console.log(id);
   const data = await bugModel.findById({ _id: id });
-  const { status, priority } = data;
+  const { status, priority, deadline } = data;
   console.log(id);
 
   const value = await logsModel.create({
@@ -71,6 +113,8 @@ exports.updateBug = catchAsync(async (req, res, next) => {
     previousStatus: status,
     currentPriority: req.body.priority,
     previousPriority: priority,
+    currentDeadline: req.body.deadline,
+    previousDeadline: deadline,
     bug: id,
     logUser: user_id,
     comment: req.body.comment || "",
@@ -93,8 +137,27 @@ exports.updateBug = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.createBug = catchAsync(async (req, res, next) => {
+  const doc = await Bug.create({
+    priority: req.body.priority,
+    file: req.body?.file,
+    status: req.body.status,
+    issueTitle: req.body.issueTitle,
+    issueDescription: req.body.issueDescription,
+    project: req.body.project,
+    createdBy: req.user._id,
+    deadline: req.body.deadline,
+  });
+
+  res.status(201).json({
+    status: "success",
+
+    data: doc,
+  });
+});
+
 //exports.getAllBug = factory.getAll(bugModel);
-exports.createBug = factory.createOne(bugModel);
+//exports.createBug = factory.createOne(bugModel);
 exports.getBug = factory.getOne(bugModel);
 //exports.updateBug = factory.updateOne(bugModel);
 exports.deleteBug = factory.deleteOne(bugModel);

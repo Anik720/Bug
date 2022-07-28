@@ -25,11 +25,22 @@ const bugSchema = new mongoose.Schema(
       default: null,
     },
 
+
+    deadline:{
+      type:Date,
+      
+    },
     project: {
       type: mongoose.Schema.ObjectId,
       ref: "Project",
     },
-
+    users: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: "User",
+        default: [],
+      },
+    ],
     createdBy: {
       type: mongoose.Schema.ObjectId,
       ref: "User",
@@ -52,6 +63,14 @@ bugSchema.pre(/^find/, function (next) {
 bugSchema.pre(/^find/, function (next) {
   this.populate({
     path: "createdBy",
+    select: "-__v -user",
+  });
+
+  next();
+});
+bugSchema.pre(/^find/, function (next) {
+  this.populate({
+    path: "users",
     select: "-__v -user",
   });
 

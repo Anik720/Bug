@@ -5,6 +5,7 @@ const catchAsync = require("./../utils/catchAsync");
 const Bug = require("./../models/bugModel");
 const factory = require("./handlerFactory");
 const { MongoClient, ObjectId } = require("mongodb");
+const { crossOriginResourcePolicy } = require("helmet");
 
 exports.getProjectUnderPM = catchAsync(async (req, res, next) => {
   const email = req.query.email;
@@ -29,32 +30,21 @@ exports.getProjecttype = catchAsync(async (req, res, next) => {
 exports.getProjectType = catchAsync(async (req, res, next) => {
   const type = req.query.space_id;
   const project = req.query.project_id;
-  const userId = req.query.user_id;
+  const userId = req.user._id;
   console.log("Hello", userId);
 
   // const spaces = await Space.find({});
   let projects = [];
 
-  if (!userId) {
-    if (project) {
-      projects = await Project.find({
-        space: type,
-        _id: project,
-      }).populate(["space", "bugg"]);
-    } else {
-      projects = await Project.find({ space: type }).populate([
-        "space",
-        "bugg",
-      ]);
-    }
-  } else {
+  if (project) {
     projects = await Project.find({
       space: type,
-
-      createdBy: userId,
+      _id: project,
     }).populate(["space", "bugg"]);
+  } else {
+    projects = await Project.find({ space: type }).populate(["space", "bugg"]);
   }
-  console.log(projects);
+  //console.log(projects);
 
   // const arr = projects.filter((x) => {
   //   return JSON.stringify(x.space._id) === JSON.stringify(type);
@@ -118,35 +108,60 @@ exports.getProjectsByLoggedinUser = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.updateProject = catchAsync(async (req, res, next) => {
-  const newUsers = req.body.users;
+// exports.addUser = catchAsync(async (req, res, next) => {
+//   const newUsers = req.body.users;
+//   console.log(newUsers);
 
-  const previousUser = await Project.findById(req.params.id);
-  const a = JSON.stringify();
-  const b = a;
-  console.log(previousUser);
-  let newUserss = [...newUsers, ...previousUser.users];
-  console.log(newUserss);
+//   const project = await Project.findById(req.params.id);
 
-  req.body.users = newUserss;
+//   let doc;
 
-  const doc = await Project.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-    runValidators: true,
+//   if (project.users.indexOf(newUsers) === -1) {
+//     // const data=[users,doc.users]
+
+//     const updateUsers = [...project.users, newUsers];
+//     // req.body.users =  updateUsers;
+//     doc = await Project.findById(req.params.id);
+//     doc.users=updateUsers
+//     doc.save()
+
+//     if (!doc) {
+//       return next(new AppError("No document found with that ID", 404));
+//     }
+//     return res.status(200).json({
+//       status: "Success",
+
+//       data: doc,
+//     });
+//   } else {
+//     doc = project;
+//     return res.status(501).json({
+//       status: "User already availabe!",
+
+//       data: doc,
+//     });
+//   }
+// });
+
+exports.createProject = catchAsync(async (req, res, next) => {
+  const doc = await Project.create({
+    name: req.body.name,
+    description: req.body.description,
+    summary: req.body.summary,
+    createdBy: req.user._id,
+    users: req.body.users,
+    space: req.body.space,
   });
 
-  if (!doc) {
-    return next(new AppError("No document found with that ID", 404));
-  }
-
-  res.status(200).json({
+  res.status(201).json({
     status: "success",
 
     data: doc,
   });
 });
+
 exports.getAllProject = factory.getAll(Project);
-exports.careteProject = factory.createOne(Project);
+//exports.careteProject = factory.createOne(Project);
 exports.getProject = factory.getOne(Project, { path: "bugg" });
-//exports.updateProject = factory.updateOne(Project);
+exports.updateProject = factory.updateOne(Project);
 exports.deleteProject = factory.deleteOne(Project);
