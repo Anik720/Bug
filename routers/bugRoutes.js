@@ -13,6 +13,11 @@ router
   .route("/getallbugsunderprojectmanager")
   .get(protect, bugController.getAllBugsUnderProjectManager);
 
+
+
+  router.route('/getbugbyloggedinuser').get(protect,bugController.getBugByLoggedInUser)
+  router.route('/allbugcurrentstatus').get(protect,bugController.allBugCurrentStatus)
+
 router
   .route("/")
   .get(bugController.getAllBug)

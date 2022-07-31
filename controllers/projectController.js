@@ -6,7 +6,7 @@ const Bug = require("./../models/bugModel");
 const factory = require("./handlerFactory");
 const { MongoClient, ObjectId } = require("mongodb");
 const { crossOriginResourcePolicy } = require("helmet");
-
+const User = require("../models/User");
 exports.getProjectUnderPM = catchAsync(async (req, res, next) => {
   const email = req.query.email;
 
@@ -31,18 +31,53 @@ exports.getProjectType = catchAsync(async (req, res, next) => {
   const type = req.query.space_id;
   const project = req.query.project_id;
   const userId = req.user._id;
-  console.log("Hello", userId);
+  //console.log("Hello", project);
+
+  const user = await User.findById(userId);
+  //console.log(user);
 
   // const spaces = await Space.find({});
   let projects = [];
 
-  if (project) {
+  if (project && type) {
     projects = await Project.find({
       space: type,
       _id: project,
     }).populate(["space", "bugg"]);
-  } else {
+    console.log();
+  } else if (type && !project) {
     projects = await Project.find({ space: type }).populate(["space", "bugg"]);
+  } else if (!type && !project) {
+    projects = await Project.find({}).populate(["space", "bugg"]);
+  }
+
+  let a = [];
+  if (user.role === "project_manager") {
+    data = projects.filter((x) => {
+      console.log("hi", x.createdBy._id);
+      return JSON.stringify(x.createdBy._id) === JSON.stringify(userId);
+    });
+  } else {
+    data = projects.map((x) => {
+      console.log("Hello", x.users);
+      if (x.users.length !== 0) {
+        // x.project.users.forEach((y) => {
+        //   if (JSON.stringify(y) === JSON.stringify(userId)) {
+        //     a.push(x);
+        //   }
+        // });
+        //console.log(x.users);
+        if (x.users.length !== 0) {
+          x.users.forEach((y) => {
+            console.log(y._id);
+            if (JSON.stringify(y._id) === JSON.stringify(userId)) {
+              console.log("Helo");
+              a.push(x);
+            }
+          });
+        }
+      }
+    });
   }
   //console.log(projects);
 
@@ -51,7 +86,9 @@ exports.getProjectType = catchAsync(async (req, res, next) => {
   // });
 
   console.log();
-
+  if (a.length !== 0) {
+    data = a;
+  }
   //console.log(bugs);
   // const commercial = projects.filter((x) => {
   //   //console.log(typeof( x.type)  );
@@ -83,7 +120,7 @@ exports.getProjectType = catchAsync(async (req, res, next) => {
   //   data = internal;
   // }
   res.status(200).json({
-    data: projects,
+    data: data,
   });
 });
 

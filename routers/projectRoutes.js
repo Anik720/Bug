@@ -18,7 +18,7 @@ router
 
 router
   .route("/")
-  .get(protect, restrictTo("project_manager"), projectController.getAllProject)
+  .get(protect,projectController.getAllProject)
   .post(protect, restrictTo("project_manager"),projectController.createProject);
 
 router

@@ -1,11 +1,13 @@
 const Bug = require("../models/bugModel");
 const bugModel = require("../models/bugModel");
 const logsModel = require("../models/logsModel");
-
+const { MongoClient, ObjectId } = require("mongodb");
 const AppError = require("./../utils/appError");
 const catchAsync = require("./../utils/catchAsync");
+const User = require("../models/User");
 
 const factory = require("./handlerFactory");
+const { findById } = require("../models/bugModel");
 
 exports.getAllBugsUnderProjectManager = catchAsync(async (req, res, next) => {
   const bugs = await bugModel.find({});
@@ -34,19 +36,25 @@ exports.addUser = catchAsync(async (req, res, next) => {
   let doc;
   // console.log(bug.users)
   // console.log()
-let index=bug.users.findIndex(user =>JSON.stringify(user._id)  === JSON.stringify(newUsers) )
-console.log("Hello",index)
+  let index = bug.users.findIndex(
+    (user) => JSON.stringify(user._id) === JSON.stringify(newUsers)
+  );
+  console.log("Hello", index);
 
-  if (index  === -1) {
+  if (index === -1) {
     // const data=[users,doc.users]
 
     const updateUsers = [...bug.users, newUsers];
-    console.log("true")
+    console.log("true");
     // req.body.users =  updateUsers;
     doc = bug;
     doc.users = updateUsers;
     doc.save();
-    const log = await logsModel.create({ addedUser: req.body.users ,logUser:req.user._id,bug:req.params.id});
+    const log = await logsModel.create({
+      addedUser: req.body.users,
+      logUser: req.user._id,
+      bug: req.params.id,
+    });
 
     if (!doc) {
       return next(new AppError("No document found with that ID", 404));
@@ -57,7 +65,7 @@ console.log("Hello",index)
       data: doc,
     });
   } else {
-    console.log("false")
+    console.log("false");
     doc = bug;
     return res.status(501).json({
       status: "User already availabe!",
@@ -99,6 +107,94 @@ exports.getAllBug = catchAsync(async (req, res, next) => {
     data: data,
   });
 });
+
+exports.getBugByLoggedInUser = catchAsync(async (req, res, next) => {
+  const userId = req.user._id;
+  //console.log(userId)
+  // console.log("hello", userId);
+  const user = await User.findById(userId);
+  console.log(user);
+
+  const bug = await Bug.find();
+  //   .populate("project")
+  //  const bug2=   await Bug.find({_id:userId}).populate("createdBy")
+
+  //  console.log(bug);
+  let data;
+  let data2;
+  // data = bug.filter(async (x) => {
+  //   if (JSON.stringify(x.project.createdBy._id) === JSON.stringify(userId)) {
+  //     console.log("Hello")
+  //     return JSON.stringify(x.project.createdBy._id) === JSON.stringify(userId);
+  //   } else {
+  //     console.log("Hi")
+  //     data2 = await Bug.find({ users: userId }).populate("project");
+  //     console.log(data2);
+  //     // res.status(200).json({
+  //     //   message: "success",
+  //     //   data: data2,
+  //     // });
+  //   }
+  // });
+  var a = [];
+  if (user.role === "project_manager") {
+
+    data = bug.filter((x) => {
+      return JSON.stringify(x.project.createdBy._id) === JSON.stringify(userId);
+    });
+  } else {
+    data = bug.map((x) => {
+      // console.log("Hello",);
+      if (x.project.users.length !== 0) {
+        // x.project.users.forEach((y) => {
+        //   if (JSON.stringify(y) === JSON.stringify(userId)) {
+        //     a.push(x);
+        //   }
+        // });
+        //console.log(x.users);
+        if (x.users.length !== 0) {
+          x.users.forEach(y=>{
+            console.log(y._id)
+            if (JSON.stringify(y._id) === JSON.stringify(userId)){
+              console.log("Helo")
+              a.push(x)
+            }
+          })
+        }
+      }
+    });
+  }
+if(a.length!==0){
+  data=a
+}
+  //console.log(data);
+  res.status(200).json({
+    message: "success",
+    data: data,
+  });
+});
+
+exports.allBugCurrentStatus=catchAsync(async(req,res,next)=>{
+  
+const solveBugs=await Bug.find({status:"completed"})
+const unsolveBugs=await Bug.find({status:{$ne:"completed"}})
+console.log(solveBugs.length)
+console.log(unsolveBugs.length)
+
+res.status(200).json({message: "success",
+data:{
+solved:solveBugs.length,
+unsolveBugs:unsolveBugs.length,
+}})
+
+
+})
+
+
+
+
+
+
 
 exports.updateBug = catchAsync(async (req, res, next) => {
   const id = req.params.id;
@@ -147,13 +243,26 @@ exports.createBug = catchAsync(async (req, res, next) => {
     project: req.body.project,
     createdBy: req.user._id,
     deadline: req.body.deadline,
-  });
+  })
+    .then(
+      async (favorite) => {
+        console.log("Favorite marked", favorite);
+        const result = await Bug.findById(favorite._id).populate("project");
 
-  res.status(201).json({
-    status: "success",
+        console.log(result);
+        res.statusCode = 200;
+        // res.setHeader("Content-Type", "application/json");
+        res.json(result);
+      },
+      (err) => next(err)
+    )
+    .catch((err) => next(err));
 
-    data: doc,
-  });
+  // res.status(201).json({
+  //   status: "success",
+
+  //   data: doc,
+  // });
 });
 
 //exports.getAllBug = factory.getAll(bugModel);
