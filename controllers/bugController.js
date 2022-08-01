@@ -95,10 +95,9 @@ exports.getAllBug = catchAsync(async (req, res, next) => {
   console.log(userId);
   let data;
   if (userId) {
-    data = await Bug.find({ project: userId }).populate("project");
-    //console.log(bugs);
+    data = await Bug.find({ project: userId }).populate("project").sort({ createdAt: -1 });;
   } else {
-    data = await Bug.find({});
+    data = await Bug.find({}).sort({ createdAt: -1 });;
   }
 
   res.status(200).json({
@@ -110,35 +109,17 @@ exports.getAllBug = catchAsync(async (req, res, next) => {
 
 exports.getBugByLoggedInUser = catchAsync(async (req, res, next) => {
   const userId = req.user._id;
-  //console.log(userId)
-  // console.log("hello", userId);
+
   const user = await User.findById(userId);
   console.log(user);
 
   const bug = await Bug.find();
-  //   .populate("project")
-  //  const bug2=   await Bug.find({_id:userId}).populate("createdBy")
 
-  //  console.log(bug);
   let data;
   let data2;
-  // data = bug.filter(async (x) => {
-  //   if (JSON.stringify(x.project.createdBy._id) === JSON.stringify(userId)) {
-  //     console.log("Hello")
-  //     return JSON.stringify(x.project.createdBy._id) === JSON.stringify(userId);
-  //   } else {
-  //     console.log("Hi")
-  //     data2 = await Bug.find({ users: userId }).populate("project");
-  //     console.log(data2);
-  //     // res.status(200).json({
-  //     //   message: "success",
-  //     //   data: data2,
-  //     // });
-  //   }
-  // });
+
   var a = [];
   if (user.role === "project_manager") {
-
     data = bug.filter((x) => {
       return JSON.stringify(x.project.createdBy._id) === JSON.stringify(userId);
     });
@@ -146,27 +127,21 @@ exports.getBugByLoggedInUser = catchAsync(async (req, res, next) => {
     data = bug.map((x) => {
       // console.log("Hello",);
       if (x.project.users.length !== 0) {
-        // x.project.users.forEach((y) => {
-        //   if (JSON.stringify(y) === JSON.stringify(userId)) {
-        //     a.push(x);
-        //   }
-        // });
-        //console.log(x.users);
         if (x.users.length !== 0) {
-          x.users.forEach(y=>{
-            console.log(y._id)
-            if (JSON.stringify(y._id) === JSON.stringify(userId)){
-              console.log("Helo")
-              a.push(x)
+          x.users.forEach((y) => {
+            console.log(y._id);
+            if (JSON.stringify(y._id) === JSON.stringify(userId)) {
+              console.log("Helo");
+              a.push(x);
             }
-          })
+          });
         }
       }
     });
   }
-if(a.length!==0){
-  data=a
-}
+  if (a.length !== 0) {
+    data = a;
+  }
   //console.log(data);
   res.status(200).json({
     message: "success",
@@ -174,27 +149,65 @@ if(a.length!==0){
   });
 });
 
-exports.allBugCurrentStatus=catchAsync(async(req,res,next)=>{
-  
-const solveBugs=await Bug.find({status:"completed"})
-const unsolveBugs=await Bug.find({status:{$ne:"completed"}})
-console.log(solveBugs.length)
-console.log(unsolveBugs.length)
+exports.getUserFromProjectBug = catchAsync(async (req, res, next) => {
+  const userId = req.user._id;
+  console.log(userId);
+  let data = [];
 
-res.status(200).json({message: "success",
-data:{
-solved:solveBugs.length,
-unsolveBugs:unsolveBugs.length,
-}})
+  const bug = await Bug.find();
 
+  console.log(bug);
 
-})
+  bug.map((x) => {
+    // console.log("Hello",);
+    if (x.project.users.length !== 0) {
+      x.project.users.forEach((y) => {
+        if (JSON.stringify(y) === JSON.stringify(userId)) {
+          data.push(x);
+        }
+      });
+    }
+  });
 
+  res.status(200).json({
+    message: "success",
+    results: data.length,
+    data: data,
+  });
+});
 
+exports.allBugCurrentStatus = catchAsync(async (req, res, next) => {
+  const userId = req.user._id;
+  const bugs = await Bug.find();
 
+  let solveBugs = [];
+  let unsolvedBugs = [];
 
-
-
+  bugs.map((x) => {
+    if (x.project.users.length !== 0) {
+      x.project.users.forEach((y) => {
+        if (
+          JSON.stringify(y) === JSON.stringify(userId) &&
+          x.status === "completed"
+        ) {
+          solveBugs.push(x);
+        } else if (
+          JSON.stringify(y) === JSON.stringify(userId) &&
+          x.status !== "completed"
+        ) {
+          unsolvedBugs.push(x);
+        }
+      });
+    }
+  });
+  res.status(200).json({
+    message: "success",
+    data: {
+      solvedBugs: solveBugs.length,
+      unsolvedBugs: unsolvedBugs.length,
+    },
+  });
+});
 
 exports.updateBug = catchAsync(async (req, res, next) => {
   const id = req.params.id;

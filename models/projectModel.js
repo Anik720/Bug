@@ -9,11 +9,9 @@ const projectSchema = new mongoose.Schema(
 
     description: {
       type: String,
-      required: [true, "Please give a project description!"],
     },
     summary: {
       type: String,
-      required: [true, "Please give a project summary!"],
     },
 
     createdBy: {
@@ -27,6 +25,7 @@ const projectSchema = new mongoose.Schema(
         default: [],
       },
     ],
+
     space: {
       type: mongoose.Schema.ObjectId,
       ref: "Space",

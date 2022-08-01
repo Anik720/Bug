@@ -4,100 +4,10 @@ const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
 const crypto = require("crypto");
 const sendMail = require("../utils/email");
-
-// const signToken = (id) => {
-//   console.log("hello")
-//   return jwt.sign({ id }, process.env.JWT_SECRET, {
-//     // payload + secret + expire time
-//     expiresIn: process.env.JWT_EXPIRES_IN,
-//   });
-
-// };
-
-// const createsendToken = (user, statusCode, res) => {
-//   const token = signToken(user._id);
-//   // Remove the password from output
-//   // user.password = undefined;
-//   res.status(statusCode).json({
-//     status: 'success',
-//     token,
-//     user,
-//   });
-// };
-
-// exports.signup = catchAsync(async (req, res, next) => {
-//   let user = await User.create({
-//     name: req.body.name,
-//     email: req.body.email,
-//     password: req.body.password,
-//     passwordConfirm: req.body.passwordConfirm,
-//   });
-
-//   // Generate Account Activation Link
-//   //const activationToken = user.createAccountActivationLink();
-
-//   user.save({ validateBeforeSave: false });
-
-//   // 4 Send it to Users Email
-//   // const activationURL = `http://localhost:5000/api/users/confirmMail/${activationToken}`;
-//   //let activationURL = `${req.headers.origin}/confirmMail/${activationToken}`;
-
-//   //console.log(`req.get('host')`, req.get('host'));
-//   // console.log(`req.host`, req.host);
-//   //console.log(`req.protocol`, req.protocol);
-
-//  // const message = `GO to this link to activate your App Account : ${activationURL} .`;
-
-//   // sendMail({
-//   //   email: user.email,
-//   //   message,
-//   //   subject: 'Your Account Activation Link for Smurf App !',
-//   //   user,
-//   //   template: 'signupEmail.ejs',
-//   //   url: activationURL,
-//   // });
-//   // res.status(200).json({
-//   //   status: 'Success',
-//   //   // message: `Email Verification Link Successfully Sent to you email ${user.email}`,
-//   //   user,
-//   // });
-//    createsendToken(user, 201, res);
-// });
-
-// exports.login = catchAsync(async (req, res, next) => {
-//   const { email, password } = req.body;
-//   console.log(email);
-
-//   if (!email || !password) {
-//     //  check email and password exist
-//     return next(new AppError(' please proveide email and password ', 400));
-//   }
-
-//   const user = await User.findOne({ email }).select('+password'); // select expiclity password
-
-//   if (!user)
-//     return next(new AppError(`No User found against email ${email}`, 404));
-//   if (
-//     !user || // check user exist and password correct
-//     !(await user.correctPassword(password, user.password))
-//   ) {
-//     // candinate password,correctpassword
-//     return next(new AppError('incorrect email or password', 401));
-//   }
-
-//   console.log(`user`, user);
-
-//   // if (user.activated === false)
-//   //   return next(
-//   //     new AppError(
-//   //       `Plz Activate your email by then Link sent to your email ${user.email}`,
-//   //       401
-//   //     )
-//   //   );
-
-//   // if eveything is ok
-//   createsendToken(user, 200, res);
-// });
+var redis = require("redis");
+var JWTR = require("jwt-redis").default;
+var redisClient = redis.createClient();
+var jwtr = new JWTR(redisClient);
 
 const signToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -153,14 +63,20 @@ exports.login = catchAsync(async (req, res, next) => {
 
   // 1) Check if email and password exist
   if (!email || !password) {
-    return next(new AppError("Please provide email and password!", 400));
+    return res.status(403).json({
+      message: "Please provide email or passwordd",
+    });
+    //return next(new AppError("Please provide email and password!", 400));
   }
   console.log(req.body);
   // 2) Check if user exists && password is correct
   const user = await User.findOne({ email }).select("+password");
   console.log("usee", user);
   if (!user || !(await user.correctPassword(password, user.password))) {
-    return next(new AppError("Incorrect email or password", 401));
+   return res.status(403).json({
+      message: "Incorrect email or password",
+    });
+    //return next(new AppError("Incorrect email or password", 401));
   }
 
   // 3) If everything ok, send token to client
@@ -168,15 +84,12 @@ exports.login = catchAsync(async (req, res, next) => {
 });
 
 exports.logout = (req, res) => {
-  console.log(req.headers["authorization"]);
+  const id = req.params.id;
+  let token;
   const authHeader = req.headers["authorization"];
-  // res.cookie('jwt', 'loggedout', {
-  //   expires: new Date(Date.now() + 10 * 1000),
-  //   httpOnly: true
-  // });
-  //res.status(200).json({ status: 'success' });
-
-  jwt.sign(authHeader, "", { expiresIn: 1 }, (logout, err) => {
+  token = req.headers.authorization.split(" ")[1];
+  //console.log(authHeader)
+  jwt.sign({ id }, "anik1234", { expiresIn: "1s" }, (logout, err) => {
     if (logout) {
       res.send({ msg: "You have been Logged Out" });
     } else {

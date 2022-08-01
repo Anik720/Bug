@@ -27,11 +27,60 @@ exports.getProjecttype = catchAsync(async (req, res, next) => {
   res.status(200).json({ data: projects });
 });
 
+exports.addUser = catchAsync(async (req, res, next) => {
+  const newUsers = req.body.users;
+  //console.log(newUsers);
+
+  const project = await Project.findById(req.params.id);
+  // const data = await bugModel.findById({ _id: req.params.id });
+  // const { status, priority, deadline ,} = data;
+  let doc;
+  // console.log(bug.users)
+  // console.log()
+  let index = project.users.findIndex(
+    (user) => JSON.stringify(user._id) === JSON.stringify(newUsers)
+  );
+  console.log("Hello", index);
+
+  if (index === -1) {
+    // const data=[users,doc.users]
+
+    const updateUsers = [...project.users, newUsers];
+    console.log("true");
+    // req.body.users =  updateUsers;
+    doc = project;
+    doc.users = updateUsers;
+    doc.save();
+    // const log = await logsModel.create({
+    //   addedUser: req.body.users,
+    //   logUser: req.user._id,
+    //   bug: req.params.id,
+    // });
+
+    if (!doc) {
+      return next(new AppError("No document found with that ID", 404));
+    }
+    return res.status(200).json({
+      status: "Success",
+
+      data: doc,
+    });
+  } else {
+    console.log("false");
+    doc = project;
+    return res.status(501).json({
+      status: "User already availabe!",
+
+      data: doc,
+    });
+  }
+});
+
 exports.getProjectType = catchAsync(async (req, res, next) => {
   const type = req.query.space_id;
   const project = req.query.project_id;
   const userId = req.user._id;
-  //console.log("Hello", project);
+  console.log("Hello", type);
 
   const user = await User.findById(userId);
   //console.log(user);
@@ -179,6 +228,29 @@ exports.getProjectsByLoggedinUser = catchAsync(async (req, res, next) => {
 //     });
 //   }
 // });
+
+exports.getUserFromProjectBug = catchAsync(async (req, res, next) => {
+  const userId = req.user._id;
+  console.log(userId)
+
+  const bug = await Bug.find({users:userId}).populate("project")
+
+
+  // let arr=[]
+
+  // project.forEach(async x=>{
+  //   console.log(x)
+  //   const bug=await Bug.find({_id:x}).populate("project")
+  
+  //   arr.push(bug)
+  // })
+
+  console.log(bug);
+  res.status(200).json({
+    message:"success",
+    data:bug
+  })
+});
 
 exports.createProject = catchAsync(async (req, res, next) => {
   const doc = await Project.create({

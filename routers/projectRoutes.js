@@ -7,10 +7,11 @@ const projectController = require("../controllers/projectController");
 const authController = require("../controllers/authController");
 const protect = require("../middlewares/protect");
 const restrictTo = require("../middlewares/restrictTo");
-
+router.route("/adduser/:id").patch(protect, projectController.addUser);
 router.route("/project").get(projectController.getProjectUnderPM);
 //router.route("/projecttype").get(projectController.getProjecttype);
 router.route("/filterbytype").get(protect, projectController.getProjectType);
+
 //router.route("/adduser/:id").patch(protect, projectController.addUser);
 router
   .route("/getprojectsbyloggedinuser")
