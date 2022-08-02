@@ -25,10 +25,8 @@ const bugSchema = new mongoose.Schema(
       default: null,
     },
 
-
-    deadline:{
-      type:Date,
-      
+    deadline: {
+      type: Date,
     },
     project: {
       type: mongoose.Schema.ObjectId,
@@ -54,7 +52,6 @@ const bugSchema = new mongoose.Schema(
 bugSchema.pre(/^find/, function (next) {
   this.populate({
     path: "project",
-
   });
 
   next();

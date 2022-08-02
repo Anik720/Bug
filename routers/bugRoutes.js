@@ -8,7 +8,7 @@ const authController = require("../controllers/authController");
 const protect = require("../middlewares/protect");
 const restrictTo = require("../middlewares/restrictTo");
 
-router.route("/adduser/:id").patch(protect, bugController.addUser);
+router.route("/userAction/:id").patch(protect, bugController.userAction);
 
 router
   .route("/getuserfromprojectbug")

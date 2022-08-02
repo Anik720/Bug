@@ -8,6 +8,7 @@ const User = require("../models/User");
 
 const factory = require("./handlerFactory");
 const { findById } = require("../models/bugModel");
+const { JsonWebTokenError } = require("jsonwebtoken");
 
 exports.getAllBugsUnderProjectManager = catchAsync(async (req, res, next) => {
   const bugs = await bugModel.find({});
@@ -26,78 +27,79 @@ exports.getAllBugsUnderProjectManager = catchAsync(async (req, res, next) => {
 
   res.status(200).json({ data: arr });
 });
-exports.addUser = catchAsync(async (req, res, next) => {
+exports.userAction = catchAsync(async (req, res, next) => {
   const newUsers = req.body.users;
-  //console.log(newUsers);
 
-  const bug = await Bug.findById(req.params.id);
-  // const data = await bugModel.findById({ _id: req.params.id });
-  // const { status, priority, deadline ,} = data;
+  console.log("newUsers", newUsers);
+
+  const action = req.query.action;
   let doc;
-  // console.log(bug.users)
-  // console.log()
+  const bug = await Bug.findById(req.params.id);
+
+  if (action === "remove") {
+    const data = bug.users.filter((x) => {
+      return JSON.stringify(x._id) !== JSON.stringify(newUsers);
+    });
+    console.log("data", data);
+    bug.users = data;
+    doc = bug;
+    doc.save();
+    return res.status(501).json({
+      status: "User Deleted!",
+
+      data: doc,
+    });
+  }
+
   let index = bug.users.findIndex(
     (user) => JSON.stringify(user._id) === JSON.stringify(newUsers)
   );
   console.log("Hello", index);
 
-  if (index === -1) {
-    // const data=[users,doc.users]
+  if (action === "add") {
+    if (index === -1) {
+      const updateUsers = [...bug.users, newUsers];
+      console.log("true");
 
-    const updateUsers = [...bug.users, newUsers];
-    console.log("true");
-    // req.body.users =  updateUsers;
-    doc = bug;
-    doc.users = updateUsers;
-    doc.save();
-    const log = await logsModel.create({
-      addedUser: req.body.users,
-      logUser: req.user._id,
-      bug: req.params.id,
-    });
+      doc = bug;
+      doc.users = updateUsers;
+      doc.save();
+      const log = await logsModel.create({
+        addedUser: req.body.users,
+        logUser: req.user._id,
+        bug: req.params.id,
+      });
 
-    if (!doc) {
-      return next(new AppError("No document found with that ID", 404));
+      if (!doc) {
+        return next(new AppError("No document found with that ID", 404));
+      }
+      return res.status(200).json({
+        status: "Success",
+
+        data: doc,
+      });
+    } else {
+      console.log("false");
+      doc = bug;
+      return res.status(501).json({
+        status: "User already availabe!",
+
+        data: doc,
+      });
     }
-    return res.status(200).json({
-      status: "Success",
-
-      data: doc,
-    });
-  } else {
-    console.log("false");
-    doc = bug;
-    return res.status(501).json({
-      status: "User already availabe!",
-
-      data: doc,
-    });
   }
 });
-
-// exports.getAllBug=catchAsync(async(req,res,next)=>{
-// const bug=req.query.bug_id;
-// if(bug){
-
-// }
-//   // SEND RESPONSE
-//   res.status(200).json({
-//     status: "success",
-//     results: doc.length,
-
-//     data: doc,
-//   });
-
-// })
 
 exports.getAllBug = catchAsync(async (req, res, next) => {
   const userId = req.query.user_id;
   console.log(userId);
   let data;
   if (userId) {
-    data = await Bug.find({ project: userId }).populate("project").sort({ createdAt: -1 });;
+    data = await Bug.find({ project: userId })
+      .populate("project")
+      .sort({ createdAt: -1 });
   } else {
-    data = await Bug.find({}).sort({ createdAt: -1 });;
+    data = await Bug.find({}).sort({ createdAt: -1 });
   }
 
   res.status(200).json({
@@ -270,12 +272,6 @@ exports.createBug = catchAsync(async (req, res, next) => {
       (err) => next(err)
     )
     .catch((err) => next(err));
-
-  // res.status(201).json({
-  //   status: "success",
-
-  //   data: doc,
-  // });
 });
 
 //exports.getAllBug = factory.getAll(bugModel);
