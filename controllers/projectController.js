@@ -149,29 +149,29 @@ exports.getProjectType = catchAsync(async (req, res, next) => {
             //console.log("x", bug);
             //  x['bugg'] = x.bugg.filter(b => b.users.indexOf(JSON.stringify(userId)) !== -1)
             //x.bugg[index]=bug
-            b.push(bug);
+            c.push(bug);
           }
         });
       });
     });
-    console.log("b", b);
-    projects.map((x) => {
-      x.bugg.map((y) => {
-        y.users.map((t) => {
-          b.forEach((z) => {
-            console.log("zzzzzz",z.users.indexOf(t) !== -1)
-            if (z.users.indexOf(t) !== -1) {
-              c.push(x);
-            }
-          });
-        });
-      });
-    });
+    // console.log("b", b);
+    // projects.map((x) => {
+    //   x.bugg.map((y) => {
+    //     y.users.map((t) => {
+    //       b.forEach((z) => {
+    //         console.log("zzzzzz",z.users.indexOf(t) !== -1)
+    //         if (z.users.indexOf(t) !== -1) {
+    //           c.push(x);
+    //         }
+    //       });
+    //     });
+    //   });
+    // });
   }
 
   //projects.bugg=b
   // console.log("b", b.length);
-  console.log("b", c);
+  console.log("b", b);
 
   if (a.length !== 0) {
     // if(a.includes(null)){
