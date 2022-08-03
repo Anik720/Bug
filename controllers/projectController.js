@@ -93,43 +93,105 @@ exports.getProjectType = catchAsync(async (req, res, next) => {
   }
 
   let a = [];
+  let b = [];
+  let c = [];
   if (user.role === "project_manager") {
     data = projects.filter((x) => {
       console.log("hi", x.createdBy._id);
       return JSON.stringify(x.createdBy._id) === JSON.stringify(userId);
     });
-  } else {
+  } else if (user.role === "client") {
     data = projects.map((x) => {
-      console.log("Hello", x.users);
+      //console.log("Hello", x);
+      //if (x.users.length !== 0) {
+      // x.project.users.forEach((y) => {
+      //   if (JSON.stringify(y) === JSON.stringify(userId)) {
+      //     a.push(x);
+      //   }
+      // });
+      //console.log(x.users);
       if (x.users.length !== 0) {
-        // x.project.users.forEach((y) => {
-        //   if (JSON.stringify(y) === JSON.stringify(userId)) {
-        //     a.push(x);
-        //   }
-        // });
-        //console.log(x.users);
-        if (x.users.length !== 0) {
-          x.users.forEach((y) => {
-            console.log(y._id);
-            if (JSON.stringify(y._id) === JSON.stringify(userId)) {
-              console.log("Helo");
-              a.push(x);
-            }
-          });
-        }
+        x.users.forEach((y) => {
+          //console.log("y", y._id, userId);
+          if (JSON.stringify(y._id) === JSON.stringify(userId)) {
+            console.log("Helo");
+            // console.log("x", x);
+            a.push(x);
+          }
+        });
       }
     });
   }
-  //console.log(projects);
 
-  // const arr = projects.filter((x) => {
-  //   return JSON.stringify(x.space._id) === JSON.stringify(type);
-  // });
-
-  if (a.length !== 0) {
-    data = a;
+  //else if (user.role === "member") {
+  //   const filterBug = []
+  //   data = projects.map((x) => {
+  //     x.bugg.map(bug => {
+  //       bug.users.map(user => {
+  //         if(JSON.stringify(user._id) === JSON.stringify(userId)){
+  //           filterBug.push(bug)
+  //         }
+  //       })
+  //     })
+  //   });
+  //   console.log(filterBug)
+  // }
+  else if (user.role === "member") {
+    //data=projects
+    projects.map((x) => {
+      //console.log(x.bugg);
+      x.bugg.map((bug) => {
+        bug.users.filter((user, index) => {
+          console.log("Hello", user._id);
+          //return JSON.stringify(user._id) === JSON.stringify(userId);
+          if (JSON.stringify(user._id) === JSON.stringify(userId)) {
+            // console.log("Helo");
+            //console.log("x", bug);
+            //  x['bugg'] = x.bugg.filter(b => b.users.indexOf(JSON.stringify(userId)) !== -1)
+            //x.bugg[index]=bug
+            b.push(bug);
+          }
+        });
+      });
+    });
+    console.log("b", b);
+    projects.map((x) => {
+      x.bugg.map((y) => {
+        y.users.map((t) => {
+          b.forEach((z) => {
+            console.log("zzzzzz",z.users.indexOf(t) !== -1)
+            if (z.users.indexOf(t) !== -1) {
+              c.push(x);
+            }
+          });
+        });
+      });
+    });
   }
 
+  //projects.bugg=b
+  // console.log("b", b.length);
+  console.log("b", c);
+
+  if (a.length !== 0) {
+    // if(a.includes(null)){
+    //   return
+    // }
+
+    data = a;
+  }
+  if (c.length !== 0) {
+    // if(a.includes(null)){
+    //   return
+    // }
+
+    data = c;
+  }
+
+  // if (data?.includes(undefined)) {
+  //   console.log(data);
+  //   data = [];
+  // }
   res.status(200).json({
     data: data,
   });

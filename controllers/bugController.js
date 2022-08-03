@@ -44,7 +44,7 @@ exports.userAction = catchAsync(async (req, res, next) => {
     bug.users = data;
     doc = bug;
     doc.save();
-    return res.status(501).json({
+    return res.status(200).json({
       status: "User Deleted!",
 
       data: doc,
