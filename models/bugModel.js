@@ -32,6 +32,11 @@ const bugSchema = new mongoose.Schema(
       type: mongoose.Schema.ObjectId,
       ref: "Project",
     },
+
+    type: {
+      type: String,
+      enum: ["bug", "change_request", "add_feature"],
+    },
     users: [
       {
         type: mongoose.Schema.ObjectId,

@@ -74,7 +74,7 @@ exports.getProjectType = catchAsync(async (req, res, next) => {
   const type = req.query.space_id;
   const project = req.query.project_id;
   const userId = req.user._id;
-  console.log("Hello", type);
+  console.log("Hello", userId);
 
   const user = await User.findById(userId);
 
@@ -95,103 +95,54 @@ exports.getProjectType = catchAsync(async (req, res, next) => {
   let a = [];
   let b = [];
   let c = [];
+  let skProjet = [];
+  let data = [];
   if (user.role === "project_manager") {
     data = projects.filter((x) => {
       console.log("hi", x.createdBy._id);
       return JSON.stringify(x.createdBy._id) === JSON.stringify(userId);
     });
   } else if (user.role === "client") {
-    data = projects.map((x) => {
-      //console.log("Hello", x);
-      //if (x.users.length !== 0) {
-      // x.project.users.forEach((y) => {
-      //   if (JSON.stringify(y) === JSON.stringify(userId)) {
-      //     a.push(x);
-      //   }
-      // });
-      //console.log(x.users);
+    projects.map((x) => {
       if (x.users.length !== 0) {
         x.users.forEach((y) => {
           //console.log("y", y._id, userId);
           if (JSON.stringify(y._id) === JSON.stringify(userId)) {
             console.log("Helo");
             // console.log("x", x);
-            a.push(x);
+            data.push(x);
           }
         });
       }
     });
-  }
-
-  //else if (user.role === "member") {
-  //   const filterBug = []
-  //   data = projects.map((x) => {
-  //     x.bugg.map(bug => {
-  //       bug.users.map(user => {
-  //         if(JSON.stringify(user._id) === JSON.stringify(userId)){
-  //           filterBug.push(bug)
-  //         }
-  //       })
-  //     })
-  //   });
-  //   console.log(filterBug)
-  // }
-  else if (user.role === "member") {
-    //data=projects
+  } else if (user.role === "member") {
     projects.map((x) => {
-      //console.log(x.bugg);
       x.bugg.map((bug) => {
         bug.users.filter((user, index) => {
-          console.log("Hello", user._id);
-          //return JSON.stringify(user._id) === JSON.stringify(userId);
           if (JSON.stringify(user._id) === JSON.stringify(userId)) {
-            // console.log("Helo");
-            //console.log("x", bug);
-            //  x['bugg'] = x.bugg.filter(b => b.users.indexOf(JSON.stringify(userId)) !== -1)
-            //x.bugg[index]=bug
             c.push(bug);
           }
         });
       });
     });
-    // console.log("b", b);
-    // projects.map((x) => {
-    //   x.bugg.map((y) => {
-    //     y.users.map((t) => {
-    //       b.forEach((z) => {
-    //         console.log("zzzzzz",z.users.indexOf(t) !== -1)
-    //         if (z.users.indexOf(t) !== -1) {
-    //           c.push(x);
-    //         }
-    //       });
-    //     });
-    //   });
-    // });
+    c.map((bug) => {
+      let indexNum = data.findIndex((x) => x._id === bug.project._id);
+      if (indexNum === -1) {
+        data.push({
+          _id: bug.project._id,
+          name: bug.project.name,
+          bugg: [bug],
+        });
+      } else {
+        data[indexNum].bugg = [...data[indexNum].bugg, bug];
+      }
+    });
   }
-
-  //projects.bugg=b
-  // console.log("b", b.length);
-  console.log("b", b);
 
   if (a.length !== 0) {
-    // if(a.includes(null)){
-    //   return
-    // }
-
     data = a;
   }
-  if (c.length !== 0) {
-    // if(a.includes(null)){
-    //   return
-    // }
 
-    data = c;
-  }
-
-  // if (data?.includes(undefined)) {
-  //   console.log(data);
-  //   data = [];
-  // }
   res.status(200).json({
     data: data,
   });

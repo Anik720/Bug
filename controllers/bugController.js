@@ -1,3 +1,5 @@
+const multer = require("multer");
+const sharp = require("sharp");
 const Bug = require("../models/bugModel");
 const bugModel = require("../models/bugModel");
 const logsModel = require("../models/logsModel");
@@ -9,6 +11,60 @@ const User = require("../models/User");
 const factory = require("./handlerFactory");
 const { findById } = require("../models/bugModel");
 const { JsonWebTokenError } = require("jsonwebtoken");
+
+const multerStorage = multer.memoryStorage();
+
+const multerFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith("image")) {
+    cb(null, true);
+  } else {
+    cb(new AppError("Not an image! Please upload only images.", 400), false);
+  }
+};
+
+const upload = multer({
+  storage: multerStorage,
+});
+
+exports.uploadImages = upload.fields([{ name: "images",name:"files", maxCount: 100 }]);
+
+// upload.single('image') req.file
+// upload.array('images', 5) req.files
+
+exports.resizeImages = catchAsync(async (req, res, next) => {
+  if (!req.files.images) {
+    req.body.files = req.files.files;
+
+    return next();
+  }
+
+  // 1) Cover image
+  // req.body.imageCover = `tour-${req.params.id}-${Date.now()}-cover.jpeg`;
+  // await sharp(req.files.imageCover[0].buffer)
+  //   .resize(2000, 1333)
+  //   .toFormat('jpeg')
+  //   .jpeg({ quality: 90 })
+  //   .toFile(`public/img/tours/${req.body.imageCover}`);
+
+  // 2) Images
+  req.body.images = [];
+
+  await Promise.all(
+    req.files.images.map(async (file, i) => {
+      const filename = `bug-${req.params.id}-${Date.now()}-${i + 1}.jpeg`;
+
+      await sharp(file.buffer)
+        .resize(2000, 1333)
+        .toFormat("jpeg")
+        .jpeg({ quality: 90 })
+        .toFile(`public/img/bugs/${filename}`);
+
+      req.body.images.push(filename);
+    })
+  );
+
+  next();
+});
 
 exports.getAllBugsUnderProjectManager = catchAsync(async (req, res, next) => {
   const bugs = await bugModel.find({});
@@ -54,7 +110,7 @@ exports.userAction = catchAsync(async (req, res, next) => {
   let index = bug.users.findIndex(
     (user) => JSON.stringify(user._id) === JSON.stringify(newUsers)
   );
-  console.log("Hello", index);
+  console.log("Hello", bug);
 
   if (action === "add") {
     if (index === -1) {
@@ -68,16 +124,29 @@ exports.userAction = catchAsync(async (req, res, next) => {
         addedUser: req.body.users,
         logUser: req.user._id,
         bug: req.params.id,
-      });
+      }).then(
+        async (favorite) => {
+          console.log("Favorite marked", favorite);
+          const result = await Bug.findById(req.params.id).populate("users");
+  
+          console.log(result);
+          //res.statusCode = 200;
+          // res.setHeader("Content-Type", "application/json");
+          //res.json(result);
+          return res.status(200).json({
+            status: "Success",
+    
+            data: result,
+          });
+        },
+        (err) => next(err)
+      )
+      .catch((err) => next(err));;
 
       if (!doc) {
         return next(new AppError("No document found with that ID", 404));
       }
-      return res.status(200).json({
-        status: "Success",
-
-        data: doc,
-      });
+    
     } else {
       console.log("false");
       doc = bug;
@@ -104,7 +173,7 @@ exports.getAllBug = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     status: "success",
-
+    result: data.length,
     data: data,
   });
 });
@@ -255,6 +324,7 @@ exports.createBug = catchAsync(async (req, res, next) => {
     status: req.body.status,
     issueTitle: req.body.issueTitle,
     issueDescription: req.body.issueDescription,
+    type: req.body.type,
     project: req.body.project,
     createdBy: req.user._id,
     deadline: req.body.deadline,

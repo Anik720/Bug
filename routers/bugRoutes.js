@@ -27,11 +27,19 @@ router
 router
   .route("/")
   .get(bugController.getAllBug)
-  .post(protect, bugController.createBug);
+  .post(
+    protect,
+
+    bugController.createBug
+  );
 
 router
   .route("/:id")
   .get(bugController.getBug)
-  .patch(protect, bugController.updateBug)
+  .patch(
+    protect,
+
+    bugController.updateBug
+  )
   .delete(bugController.deleteBug);
 module.exports = router;
