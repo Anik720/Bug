@@ -26,7 +26,9 @@ const upload = multer({
   storage: multerStorage,
 });
 
-exports.uploadImages = upload.fields([{ name: "images",name:"files", maxCount: 100 }]);
+exports.uploadImages = upload.fields([
+  { name: "images", name: "files", maxCount: 100 },
+]);
 
 // upload.single('image') req.file
 // upload.array('images', 5) req.files
@@ -120,33 +122,34 @@ exports.userAction = catchAsync(async (req, res, next) => {
       doc = bug;
       doc.users = updateUsers;
       doc.save();
-      const log = await logsModel.create({
-        addedUser: req.body.users,
-        logUser: req.user._id,
-        bug: req.params.id,
-      }).then(
-        async (favorite) => {
-          console.log("Favorite marked", favorite);
-          const result = await Bug.findById(req.params.id).populate("users");
-  
-          console.log(result);
-          //res.statusCode = 200;
-          // res.setHeader("Content-Type", "application/json");
-          //res.json(result);
-          return res.status(200).json({
-            status: "Success",
-    
-            data: result,
-          });
-        },
-        (err) => next(err)
-      )
-      .catch((err) => next(err));;
+      const log = await logsModel
+        .create({
+          addedUser: req.body.users,
+          logUser: req.user._id,
+          bug: req.params.id,
+        })
+        .then(
+          async (favorite) => {
+            console.log("Favorite marked", favorite);
+            const result = await Bug.findById(req.params.id).populate("users");
+
+            console.log(result);
+            //res.statusCode = 200;
+            // res.setHeader("Content-Type", "application/json");
+            //res.json(result);
+            return res.status(200).json({
+              status: "Success",
+
+              data: result,
+            });
+          },
+          (err) => next(err)
+        )
+        .catch((err) => next(err));
 
       if (!doc) {
         return next(new AppError("No document found with that ID", 404));
       }
-    
     } else {
       console.log("false");
       doc = bug;
@@ -227,8 +230,6 @@ exports.getUserFromProjectBug = catchAsync(async (req, res, next) => {
 
   const bug = await Bug.find();
 
-  console.log(bug);
-
   bug.map((x) => {
     // console.log("Hello",);
     if (x.project.users.length !== 0) {
@@ -250,33 +251,82 @@ exports.getUserFromProjectBug = catchAsync(async (req, res, next) => {
 exports.allBugCurrentStatus = catchAsync(async (req, res, next) => {
   const userId = req.user._id;
   const bugs = await Bug.find();
-
+  //console.log(bugs);
+  const user = await User.findById(userId);
   let solveBugs = [];
   let unsolvedBugs = [];
+  //console.log(user.role);
+  const role = user.role;
 
-  bugs.map((x) => {
-    if (x.project.users.length !== 0) {
-      x.project.users.forEach((y) => {
-        if (
-          JSON.stringify(y) === JSON.stringify(userId) &&
-          x.status === "completed"
-        ) {
-          solveBugs.push(x);
-        } else if (
-          JSON.stringify(y) === JSON.stringify(userId) &&
-          x.status !== "completed"
-        ) {
-          unsolvedBugs.push(x);
-        }
-      });
-    }
-  });
+  // bugs.map((x) => {
+  //   if (x.project.users.length !== 0) {
+  //     console.log(x.users.role)
+  //     x.project.users.forEach((y) => {
+
+  //       if (
+  //         JSON.stringify(y) === JSON.stringify(userId) &&
+  //         x.status === "completed"
+  //       ) {
+  //         solveBugs.push(x);
+  //       } else if (
+  //         JSON.stringify(y) === JSON.stringify(userId) &&
+  //         x.status !== "completed"
+  //       ) {
+  //         unsolvedBugs.push(x);
+  //       }
+  //     });
+  //   }
+  // });
+
+  if (role === "client") {
+    bugs.map((x) => {
+      console.log(x.project.users);
+      if (x.project.users.length !== 0) {
+        x.project.users.map((y) => {
+          if (
+            JSON.stringify(y) === JSON.stringify(userId) &&
+            x.status === "completed"
+          ) {
+            solveBugs.push(x);
+          } else if (
+            JSON.stringify(y) === JSON.stringify(userId) &&
+            x.status !== "completed"
+          ) {
+            unsolvedBugs.push(x);
+          }
+        });
+      }
+    });
+  }
+
+  if (role === "member") {
+    console.log("member");
+    bugs.map((x) => {
+      console.log(x.users);
+      if (x.users.length !== 0) {
+        x.users.map((y) => {
+          if (
+            JSON.stringify(y._id) === JSON.stringify(userId) &&
+            x.status === "completed"
+          ) {
+            solveBugs.push(x);
+          } else if (
+            JSON.stringify(y._id) === JSON.stringify(userId) &&
+            x.status !== "completed"
+          ) {
+            console.log("Helo");
+
+            unsolvedBugs.push(x);
+          }
+        });
+      }
+    });
+  }
+
   res.status(200).json({
-    message: "success",
-    data: {
-      solvedBugs: solveBugs.length,
-      unsolvedBugs: unsolvedBugs.length,
-    },
+    message: "Success",
+    solvedBugs: solveBugs.length,
+    unsolvedBugs: unsolvedBugs.length,
   });
 });
 

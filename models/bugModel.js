@@ -36,6 +36,7 @@ const bugSchema = new mongoose.Schema(
     type: {
       type: String,
       enum: ["bug", "change_request", "add_feature"],
+      default: "bug",
     },
     users: [
       {
