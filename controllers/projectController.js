@@ -150,19 +150,41 @@ exports.getProjectType = catchAsync(async (req, res, next) => {
 
 exports.getProjectsByLoggedinUser = catchAsync(async (req, res, next) => {
   const userId = req.user._id;
-  console.log("hello", userId);
-
-  const projects = await Project.find({ createdBy: userId }).populate(
-    "createdBy"
-  );
-  let arr;
+  // console.log("hello", userId);
+  const user = await User.findById(userId);
+  // console.log(user);
+  const projects = await Project.find({ createdBy: userId })
+    .populate("createdBy")
+    .populate("bugg");
+  let arr = [];
   arr = projects;
+  let a = [];
+  if (user.role === "member") {
+    if (projects.length === 0) {
+      // console.log("hello");
+      const bug = await Bug.find();
 
-  if (projects.length === 0) {
-    const project = await Project.find({ users: userId });
-    arr = project;
+      arr = bug;
+      arr.map((x) => {
+        //console.log(x);
+        x.users.map((y) => {
+          //console.log(y)
+          if (JSON.stringify(y._id) === JSON.stringify(userId)) {
+            console.log(x.project);
+            a.push(x.project);
+          }
+        });
+      });
+    }
   }
-  console.log(projects);
+
+  if (a.length !== 0) {
+    const unique = [...new Set(a.map((item) => item._id))];
+    b = unique;
+
+    arr = await Project.find({ _id: [...new Set(a.map((item) => item._id))] });
+  }
+
   res.status(200).json({
     message: "success",
     data: arr,
@@ -177,6 +199,7 @@ exports.createProject = catchAsync(async (req, res, next) => {
     createdBy: req.user._id,
     users: req.body.users,
     space: req.body.space,
+    type: req.body.type,
   });
 
   res.status(201).json({

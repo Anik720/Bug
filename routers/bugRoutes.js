@@ -21,17 +21,17 @@ router
   .route("/getbugbyloggedinuser")
   .get(protect, bugController.getBugByLoggedInUser);
 router
+  .route("/getbugbyloggedinuserproid")
+  .get(protect, bugController.getBugByLoggedInUserProId);
+router
   .route("/allbugcurrentstatus")
   .get(protect, bugController.allBugCurrentStatus);
 
-router
-  .route("/")
-  .get(bugController.getAllBug)
-  .post(
-    protect,
+router.route("/").get(bugController.getAllBug).post(
+  protect,
 
-    bugController.createBug
-  );
+  bugController.createBug
+);
 
 router
   .route("/:id")

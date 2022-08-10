@@ -4,15 +4,15 @@ const logSchema = new mongoose.Schema(
   {
     currentStatus: {
       type: String,
-      default:null
+      default: null,
     },
     previousStatus: {
       type: String,
-      default:null
+      default: null,
     },
     currentPriority: {
       type: String,
-      default:null
+      default: null,
     },
     previousPriority: {
       type: String,
@@ -29,9 +29,11 @@ const logSchema = new mongoose.Schema(
     addedUser: {
       type: mongoose.Schema.ObjectId,
       ref: "User",
+      default: null,
     },
     comment: {
       type: String,
+      default: "",
     },
 
     bug: {
@@ -41,6 +43,12 @@ const logSchema = new mongoose.Schema(
     logUser: {
       type: mongoose.Schema.ObjectId,
       ref: "User",
+    },
+
+    deleteUser: {
+      type: mongoose.Schema.ObjectId,
+      ref: "User",
+      default: null,
     },
   },
   {
@@ -58,6 +66,13 @@ const logSchema = new mongoose.Schema(
 logSchema.pre(/^find/, function (next) {
   this.populate({
     path: "logUser",
+  });
+
+  next();
+});
+logSchema.pre(/^find/, function (next) {
+  this.populate({
+    path: "deleteUser",
   });
 
   next();

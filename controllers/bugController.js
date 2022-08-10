@@ -7,7 +7,7 @@ const { MongoClient, ObjectId } = require("mongodb");
 const AppError = require("./../utils/appError");
 const catchAsync = require("./../utils/catchAsync");
 const User = require("../models/User");
-
+const Project = require("../models/projectModel");
 const factory = require("./handlerFactory");
 const { findById } = require("../models/bugModel");
 const { JsonWebTokenError } = require("jsonwebtoken");
@@ -85,6 +85,56 @@ exports.getAllBugsUnderProjectManager = catchAsync(async (req, res, next) => {
 
   res.status(200).json({ data: arr });
 });
+
+exports.getBugByLoggedInUserProId = catchAsync(async (req, res, next) => {
+  const userId = req.user._id;
+  const projectId = req.query.project_id;
+  console.log("hello", projectId);
+  const user = await User.findById(userId);
+  let a = [];
+  let arr = [];
+  if (user.role === "project_manager") {
+    const projects = await Bug.find({ createdBy: userId, project: projectId })
+      .populate("createdBy")
+      .populate("project");
+
+    const uniquee = [...new Set(projects.map((item) => item._id))];
+    // arr = await Project.find({ _id: [...new Set(a.map((item) => item._id))] });
+    arr = projects;
+  }
+  // console.log(user);
+
+  if (user.role === "member") {
+    // console.log("hello");
+    const bug = await Bug.find({ project: projectId });
+
+    arr = bug;
+    arr.map((x) => {
+      //console.log(x);
+      x.users.map((y) => {
+        //console.log(y)
+        if (JSON.stringify(y._id) === JSON.stringify(userId)) {
+          console.log(x);
+          a.push(x);
+        }
+      });
+    });
+  }
+
+  if (a.length !== 0) {
+    //const unique = [...new Set(a.map((item) => item._id))];
+    //b = unique;
+
+    //arr = await Project.find({ _id: [...new Set(a.map((item) => item._id))] });
+    arr = a;
+  }
+
+  res.status(200).json({
+    message: "success",
+    data: arr,
+  });
+});
+
 exports.userAction = catchAsync(async (req, res, next) => {
   const newUsers = req.body.users;
 
@@ -95,6 +145,25 @@ exports.userAction = catchAsync(async (req, res, next) => {
   const bug = await Bug.findById(req.params.id);
 
   if (action === "remove") {
+    const log = await logsModel
+      .create({
+        deleteUser: req.body.users,
+        logUser: req.user._id,
+        bug: req.params.id,
+      })
+      .then(
+        async (favorite) => {
+          console.log("Favorite marked", favorite);
+          const result = await Bug.findById(req.params.id).populate("users");
+
+          console.log(result);
+          //res.statusCode = 200;
+          // res.setHeader("Content-Type", "application/json");
+          //res.json(result);
+        },
+        (err) => next(err)
+      )
+      .catch((err) => next(err));
     const data = bug.users.filter((x) => {
       return JSON.stringify(x._id) !== JSON.stringify(newUsers);
     });
@@ -185,10 +254,9 @@ exports.getBugByLoggedInUser = catchAsync(async (req, res, next) => {
   const userId = req.user._id;
 
   const user = await User.findById(userId);
-  console.log(user);
 
   const bug = await Bug.find();
-
+  // console.log(bug);
   let data;
   let data2;
 
@@ -197,20 +265,32 @@ exports.getBugByLoggedInUser = catchAsync(async (req, res, next) => {
     data = bug.filter((x) => {
       return JSON.stringify(x.project.createdBy._id) === JSON.stringify(userId);
     });
-  } else {
+  } else if (user.role === "member") {
+    console.log("hi");
     data = bug.map((x) => {
-      // console.log("Hello",);
-      if (x.project.users.length !== 0) {
-        if (x.users.length !== 0) {
-          x.users.forEach((y) => {
-            console.log(y._id);
-            if (JSON.stringify(y._id) === JSON.stringify(userId)) {
-              console.log("Helo");
-              a.push(x);
-            }
-          });
-        }
+      console.log("Hello", x.users);
+
+      if (x.users.length !== 0) {
+        x.users.forEach((y) => {
+          console.log(y._id);
+          if (JSON.stringify(y._id) === JSON.stringify(userId)) {
+            console.log("Helo");
+            a.push(x);
+          }
+        });
       }
+    });
+  } else if (user.role === "client") {
+    console.log("helloooooo");
+
+    bug.map((x) => {
+      //console.log(x)
+      x.project.users.map((y) => {
+        if (JSON.stringify(y._id) === JSON.stringify(userId)) {
+          console.log("Helo");
+          a.push(x);
+        }
+      });
     });
   }
   if (a.length !== 0) {
