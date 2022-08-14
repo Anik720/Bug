@@ -26,6 +26,11 @@ router
 router
   .route("/allbugcurrentstatus")
   .get(protect, bugController.allBugCurrentStatus);
+router
+  .route("/practice")
+  .get(protect, bugController.practice);
+
+
 
 router.route("/").get(bugController.getAllBug).post(
   protect,

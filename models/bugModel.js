@@ -7,10 +7,12 @@ const bugSchema = new mongoose.Schema(
       enum: ["high", "medium", "low"],
       default: "low",
     },
-    file: {
-      type: String,
-      default: null,
-    },
+    file: [
+      {
+        type: String,
+        default: [],
+      },
+    ],
     status: {
       type: String,
       enum: ["inprogress", "inreview", "completed", "rejected"],

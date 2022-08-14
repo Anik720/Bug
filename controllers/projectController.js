@@ -71,27 +71,61 @@ exports.addUser = catchAsync(async (req, res, next) => {
 });
 
 exports.getProjectType = catchAsync(async (req, res, next) => {
-  const type = req.query.space_id;
+  const typee = req.query.space_id;
   const project = req.query.project_id;
   const userId = req.user._id;
+  const bugType = req.query.bug_type;
   console.log("Hello", userId);
 
   const user = await User.findById(userId);
-
+console.log(user.role)
   let projects = [];
 
-  if (project && type) {
+  if (project && typee) {
     projects = await Project.find({
-      space: type,
+      space: typee,
       _id: project,
     }).populate(["space", "bugg"]);
     console.log();
-  } else if (type && !project) {
-    projects = await Project.find({ space: type }).populate(["space", "bugg"]);
-  } else if (!type && !project) {
+  } else if (typee && !project) {
+    projects = await Project.find({ space: typee }).populate(["space", "bugg"]);
+  } else if (!typee && !project) {
     projects = await Project.find({}).populate(["space", "bugg"]);
   }
+  //console.log(projects);
+  //const agg =await Project.aggregate([{ $match: { bugg: { $in: [bugType] } } }]);
+  // console.log(agg)
+  let value = [];
+  projects.map((x) => {
+    //console.log(x);
 
+    x.bugg.filter((y) => {
+      //console.log(typeof (bugType) );
+      if (y.type === bugType) {
+        value.push(y);
+      } else if (y.type === bugType) {
+        value.push(y);
+      }
+      if (y.type === bugType) {
+        value.push(y);
+      }
+    });
+  });
+  //console.log(projects);
+  projects.map((x) => {
+    //console.log(x._id);
+    //if(JSON.stringify(x._id)===JSON.stringify())
+    value.map((y) => {
+      //console.log("y",y.project._id)
+      if (JSON.stringify(y.project._id) === JSON.stringify(x._id)) {
+        //console.log("HELooo")
+        x["bugg"] = value;
+      }
+    });
+  });
+
+
+console.log(value)
   let a = [];
   let b = [];
   let c = [];
@@ -200,7 +234,19 @@ exports.createProject = catchAsync(async (req, res, next) => {
     users: req.body.users,
     space: req.body.space,
     type: req.body.type,
-  });
+  }).then(
+    async (favorite) => {
+      console.log("Favorite marked", favorite);
+      const result = await Project.findById(favorite._id);
+
+      console.log(result);
+      res.statusCode = 200;
+      // res.setHeader("Content-Type", "application/json");
+      res.json(result);
+    },
+    (err) => next(err)
+  )
+  .catch((err) => next(err));;
 
   res.status(201).json({
     status: "success",

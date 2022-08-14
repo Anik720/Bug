@@ -90,6 +90,13 @@ exports.getBugByLoggedInUserProId = catchAsync(async (req, res, next) => {
   const userId = req.user._id;
   const projectId = req.query.project_id;
   console.log("hello", projectId);
+
+  if (projectId === "null") {
+    return res.status(200).json({
+      message: "successs",
+      data: [],
+    });
+  }
   const user = await User.findById(userId);
   let a = [];
   let arr = [];
@@ -97,7 +104,7 @@ exports.getBugByLoggedInUserProId = catchAsync(async (req, res, next) => {
     const projects = await Bug.find({ createdBy: userId, project: projectId })
       .populate("createdBy")
       .populate("project");
-
+    console.log(projects);
     const uniquee = [...new Set(projects.map((item) => item._id))];
     // arr = await Project.find({ _id: [...new Set(a.map((item) => item._id))] });
     arr = projects;
@@ -128,7 +135,9 @@ exports.getBugByLoggedInUserProId = catchAsync(async (req, res, next) => {
     //arr = await Project.find({ _id: [...new Set(a.map((item) => item._id))] });
     arr = a;
   }
-
+  if (arr.length === 0) {
+    arr = [];
+  }
   res.status(200).json({
     message: "success",
     data: arr,
@@ -204,8 +213,7 @@ exports.userAction = catchAsync(async (req, res, next) => {
 
             console.log(result);
             //res.statusCode = 200;
-            // res.setHeader("Content-Type", "application/json");
-            //res.json(result);
+
             return res.status(200).json({
               status: "Success",
 
@@ -256,19 +264,24 @@ exports.getBugByLoggedInUser = catchAsync(async (req, res, next) => {
   const user = await User.findById(userId);
 
   const bug = await Bug.find();
-  // console.log(bug);
+  console.log(user.role);
   let data;
   let data2;
 
   var a = [];
   if (user.role === "project_manager") {
     data = bug.filter((x) => {
-      return JSON.stringify(x.project.createdBy._id) === JSON.stringify(userId);
+      console.log(x);
+      if (x.project) {
+        return (
+          JSON.stringify(x?.project.createdBy?._id) === JSON.stringify(userId)
+        );
+      }
     });
   } else if (user.role === "member") {
     console.log("hi");
     data = bug.map((x) => {
-      console.log("Hello", x.users);
+      console.log("Helloo", x.users);
 
       if (x.users.length !== 0) {
         x.users.forEach((y) => {
@@ -284,22 +297,26 @@ exports.getBugByLoggedInUser = catchAsync(async (req, res, next) => {
     console.log("helloooooo");
 
     bug.map((x) => {
-      //console.log(x)
-      x.project.users.map((y) => {
-        if (JSON.stringify(y._id) === JSON.stringify(userId)) {
-          console.log("Helo");
-          a.push(x);
-        }
-      });
+      console.log(x.project);
+
+      if (x.project) {
+        x.project.users.map((y) => {
+          if (JSON.stringify(y._id) === JSON.stringify(userId)) {
+            console.log("Helo");
+            a.push(x);
+          }
+        });
+      }
     });
   }
+
   if (a.length !== 0) {
     data = a;
   }
   //console.log(data);
   res.status(200).json({
     message: "success",
-    data: data,
+    data: data || [],
   });
 });
 
@@ -472,6 +489,18 @@ exports.createBug = catchAsync(async (req, res, next) => {
       (err) => next(err)
     )
     .catch((err) => next(err));
+});
+
+exports.practice = catchAsync(async (req, res, next) => {
+  const bug = await Bug.find({}).populate("project");
+  const agg = await Bug.aggregate([
+    { $match: { project: { name: { $eq: "BAT" } } } },
+  ]);
+  console.log(bug);
+  res.status(200).json({
+    message: "Success",
+    data: agg,
+  });
 });
 
 //exports.getAllBug = factory.getAll(bugModel);
