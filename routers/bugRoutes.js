@@ -27,7 +27,7 @@ router
   .route("/allbugcurrentstatus")
   .get(protect, bugController.allBugCurrentStatus);
 router
-  .route("/practice")
+  .route("/practice/:id")
   .get(protect, bugController.practice);
 
 

@@ -103,7 +103,8 @@ exports.getBugByLoggedInUserProId = catchAsync(async (req, res, next) => {
   if (user.role === "project_manager") {
     const projects = await Bug.find({ createdBy: userId, project: projectId })
       .populate("createdBy")
-      .populate("project");
+      .populate("project")
+      .sort({ createdAt: -1 });
     console.log(projects);
     const uniquee = [...new Set(projects.map((item) => item._id))];
     // arr = await Project.find({ _id: [...new Set(a.map((item) => item._id))] });
@@ -263,7 +264,7 @@ exports.getBugByLoggedInUser = catchAsync(async (req, res, next) => {
 
   const user = await User.findById(userId);
 
-  const bug = await Bug.find();
+  const bug = await Bug.find().sort({ createdAt: -1 });
   console.log(user.role);
   let data;
   let data2;
@@ -377,21 +378,23 @@ exports.allBugCurrentStatus = catchAsync(async (req, res, next) => {
 
   if (role === "client") {
     bugs.map((x) => {
-      console.log(x.project.users);
-      if (x.project.users.length !== 0) {
-        x.project.users.map((y) => {
-          if (
-            JSON.stringify(y) === JSON.stringify(userId) &&
-            x.status === "completed"
-          ) {
-            solveBugs.push(x);
-          } else if (
-            JSON.stringify(y) === JSON.stringify(userId) &&
-            x.status !== "completed"
-          ) {
-            unsolvedBugs.push(x);
-          }
-        });
+      console.log(x.project);
+      if (x.project) {
+        if (x.project.users.length !== 0) {
+          x.project.users.map((y) => {
+            if (
+              JSON.stringify(y) === JSON.stringify(userId) &&
+              x.status === "completed"
+            ) {
+              solveBugs.push(x);
+            } else if (
+              JSON.stringify(y) === JSON.stringify(userId) &&
+              x.status !== "completed"
+            ) {
+              unsolvedBugs.push(x);
+            }
+          });
+        }
       }
     });
   }
@@ -432,7 +435,7 @@ exports.updateBug = catchAsync(async (req, res, next) => {
   const user_id = req.user._id;
   console.log(id);
   const data = await bugModel.findById({ _id: id });
-  const { status, priority, deadline } = data;
+  const { status, priority, deadline, type } = data;
   console.log(id);
 
   const value = await logsModel.create({
@@ -442,6 +445,8 @@ exports.updateBug = catchAsync(async (req, res, next) => {
     previousPriority: priority,
     currentDeadline: req.body.deadline,
     previousDeadline: deadline,
+    currentType: req.body.type,
+    previousType: type,
     bug: id,
     logUser: user_id,
     comment: req.body.comment || "",
@@ -479,7 +484,9 @@ exports.createBug = catchAsync(async (req, res, next) => {
     .then(
       async (favorite) => {
         console.log("Favorite marked", favorite);
-        const result = await Bug.findById(favorite._id).populate("project");
+        const result = await Bug.findById(favorite._id)
+          .populate("project")
+          .sort({ createdAt: -1 });
 
         console.log(result);
         res.statusCode = 200;
@@ -493,9 +500,12 @@ exports.createBug = catchAsync(async (req, res, next) => {
 
 exports.practice = catchAsync(async (req, res, next) => {
   const bug = await Bug.find({}).populate("project");
-  const agg = await Bug.aggregate([
-    { $match: { project: { name: { $eq: "BAT" } } } },
-  ]);
+  const agg = await Bug.aggregate.lookup({
+    from: "Bug",
+    localField: "project",
+    foreignField: "_id",
+    as: "projects",
+  });
   console.log(bug);
   res.status(200).json({
     message: "Success",

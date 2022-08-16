@@ -85,19 +85,21 @@ console.log(user.role)
     projects = await Project.find({
       space: typee,
       _id: project,
-    }).populate(["space", "bugg"]);
+    }).populate(["space", "bugg"]).sort({ createdAt: -1 });
     console.log();
   } else if (typee && !project) {
-    projects = await Project.find({ space: typee }).populate(["space", "bugg"]);
+    projects = await Project.find({ space: typee }).populate(["space", "bugg"]).sort({ createdAt: -1 });;
   } else if (!typee && !project) {
-    projects = await Project.find({}).populate(["space", "bugg"]);
+    projects = await Project.find({}).populate(["space", "bugg"]).sort({ createdAt: -1 });;
   }
   //console.log(projects);
   //const agg =await Project.aggregate([{ $match: { bugg: { $in: [bugType] } } }]);
   // console.log(agg)
+
   let value = [];
   projects.map((x) => {
     //console.log(x);
+    x['bugg'].sort((a,b) => b.createdAt - a.createdAt)
 
     x.bugg.filter((y) => {
       //console.log(typeof (bugType) );
@@ -113,8 +115,7 @@ console.log(user.role)
   });
   //console.log(projects);
   projects.map((x) => {
-    //console.log(x._id);
-    //if(JSON.stringify(x._id)===JSON.stringify())
+   
     value.map((y) => {
       //console.log("y",y.project._id)
       if (JSON.stringify(y.project._id) === JSON.stringify(x._id)) {
@@ -182,6 +183,9 @@ console.log(value)
   });
 });
 
+
+
+
 exports.getProjectsByLoggedinUser = catchAsync(async (req, res, next) => {
   const userId = req.user._id;
   // console.log("hello", userId);
@@ -189,7 +193,7 @@ exports.getProjectsByLoggedinUser = catchAsync(async (req, res, next) => {
   // console.log(user);
   const projects = await Project.find({ createdBy: userId })
     .populate("createdBy")
-    .populate("bugg");
+    .populate("bugg").sort({ createdAt: -1 });;
   let arr = [];
   arr = projects;
   let a = [];

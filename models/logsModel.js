@@ -14,7 +14,17 @@ const logSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+
     previousPriority: {
+      type: String,
+      default: null,
+    },
+    currentType: {
+      type: String,
+      default: null,
+    },
+
+    previousType: {
       type: String,
       default: null,
     },
