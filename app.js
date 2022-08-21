@@ -22,8 +22,8 @@ const globalErrorHandler = require("./middlewares/globalErrorHandler");
 const AppError = require("./utils/appError");
 
 // view engine setup
-app.set("view engine", "ejs");
-app.set("views", path.join(__dirname, "views"));
+app.set('view engine', 'pug');
+app.set('views', path.join(__dirname, 'views'));
 
 // var whitelist = ['http://example1.com', 'http://example2.com']
 // var corsOptions = {

@@ -3,7 +3,7 @@ const User = require("../models/User");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
 const crypto = require("crypto");
-const sendMail = require("../utils/email");
+const Email = require('./../utils/email');
 var redis = require("redis");
 var JWTR = require("jwt-redis").default;
 var redisClient = redis.createClient();
@@ -125,52 +125,100 @@ exports.confirmMail = catchAsync(async (req, res) => {
   });
 });
 
+// exports.forgotPassword = catchAsync(async (req, res, next) => {
+//   // 1 Check if Email Exists
+//   const { email } = req.body;
+
+//   if (!email) return next(new AppError(`Plz provide Email with request`, 400));
+
+//   // 2 Check If User Exists with this email
+//   const user = await User.findOne({
+//     email: email.toLowerCase(),
+//   });
+
+//   if (!user)
+//     return next(
+//       new AppError(`No User Found against this Email : ${email}`, 400)
+//     );
+
+//   // 3 Create Password Reset Token
+//   const resetToken = user.createPasswordResetToken();
+
+//   await user.save({ validateBeforeSave: false });
+
+//   // 4 Send it to Users Email
+//   // const resetURL = `localhost:5000/api/users/resetPassword/${resetToken}`;
+//   let resetURL = `${req.headers.origin}/resetPassword/${resetToken}`;
+
+//   //    = `${req.protocol}://${req.get(
+//   //     'host'
+//   //   )}/api/users/resetPassword/${resetToken}`;
+
+//   const message = `Forgot Password . Update your Password at this link ${resetURL} if you actually request it
+//    . If you did NOT forget it , simply ignore this Email`;
+
+//   sendMail({
+//     email,
+//     message,
+//     subject: "Your Password reset token (will expire in 20 minutes)",
+//     user,
+//     template: "forgotPassword.ejs",
+//     url: resetURL,
+//   });
+
+//   res.status(200).json({
+//     status: "Success",
+//     message: `Forget password link successfully sent to your email : ${email}`,
+//   });
+// });
+
+
+
 exports.forgotPassword = catchAsync(async (req, res, next) => {
-  // 1 Check if Email Exists
-  const { email } = req.body;
+  // 1) Get user based on POSTed email
+  const user = await User.findOne({ email: req.body.email });
+  if (!user) {
+    return next(new AppError('There is no user with email address.', 404));
+  }
 
-  if (!email) return next(new AppError(`Plz provide Email with request`, 400));
-
-  // 2 Check If User Exists with this email
-  const user = await User.findOne({
-    email: email.toLowerCase(),
-  });
-
-  if (!user)
-    return next(
-      new AppError(`No User Found against this Email : ${email}`, 400)
-    );
-
-  // 3 Create Password Reset Token
+  // 2) Generate the random reset token
   const resetToken = user.createPasswordResetToken();
-
   await user.save({ validateBeforeSave: false });
+  console.log(resetToken)
+  // 3) Send it to user's email
+  // try {
+    const resetURL = `${req.protocol}://${req.get(
+      'host'
+    )}/api/v1/users/resetPassword/${resetToken}`;
+    await new Email(user, resetURL).sendPasswordReset();
 
-  // 4 Send it to Users Email
-  // const resetURL = `localhost:5000/api/users/resetPassword/${resetToken}`;
-  let resetURL = `${req.headers.origin}/resetPassword/${resetToken}`;
+    res.status(200).json({
+      status: 'success',
+      message: 'Token sent to email!'
+    });
+  // } catch (err) {
+  //   user.passwordResetToken = undefined;
+  //   user.passwordResetExpires = undefined;
+  //   await user.save({ validateBeforeSave: false });
 
-  //    = `${req.protocol}://${req.get(
-  //     'host'
-  //   )}/api/users/resetPassword/${resetToken}`;
-
-  const message = `Forgot Password . Update your Password at this link ${resetURL} if you actually request it
-   . If you did NOT forget it , simply ignore this Email`;
-
-  sendMail({
-    email,
-    message,
-    subject: "Your Password reset token (will expire in 20 minutes)",
-    user,
-    template: "forgotPassword.ejs",
-    url: resetURL,
-  });
-
-  res.status(200).json({
-    status: "Success",
-    message: `Forget password link successfully sent to your email : ${email}`,
-  });
+  //   return next(
+  //     new AppError('There was an error sending the email. Try again later!'),
+  //     500
+  //   );
+  // }
 });
+
+
+
+
+
+
+
+
+
+
+
+
 
 exports.resetPassword = catchAsync(async (req, res, next) => {
   // 1 Find the  user based on Token
@@ -231,11 +279,14 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
   }
 
   // 3) if so update the  password
+  if(req.body.password!==req.body.passwordConfirm){
+    return next(new AppError("Password are not same", 401));
+  }
   user.password = req.body.password;
   user.passwordConfirm = req.body.passwordConfirm;
 
   await user.save();
 
   // 4) Log user in , send JWT
-  createsendToken(user, 200, res);
+  createSendToken(user, 200, res);
 });

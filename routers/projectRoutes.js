@@ -7,25 +7,25 @@ const projectController = require("../controllers/projectController");
 const authController = require("../controllers/authController");
 const protect = require("../middlewares/protect");
 const restrictTo = require("../middlewares/restrictTo");
-router.route("/adduser/:id").patch(protect, projectController.addUser);
+router.route("/adduser/:id").patch(protect,restrictTo("project_manager"), projectController.addUser);
 router.route("/project").get(projectController.getProjectUnderPM);
 //router.route("/projecttype").get(projectController.getProjecttype);
-router.route("/filterbytype").get(protect, projectController.getProjectType);
+router.route("/filterbytype").get(protect,restrictTo("project_manager","member","client") ,projectController.getProjectType);
 
 //router.route("/adduser/:id").patch(protect, projectController.addUser);
 router
   .route("/getprojectsbyloggedinuser")
-  .get(protect, projectController.getProjectsByLoggedinUser);
+  .get(protect,restrictTo("project_manager","member","client") , projectController.getProjectsByLoggedinUser);
 
 router
   .route("/")
-  .get(protect,projectController.getAllProject)
+  .get(restrictTo("project_manager") ,protect,projectController.getAllProject)
   .post(protect, restrictTo("project_manager"),projectController.createProject);
 
 router
   .route("/:id")
-  .get(projectController.getProject)
-  .patch(projectController.updateProject)
-  .delete(projectController.deleteProject);
+  .get(protect,restrictTo("project_manager") , projectController.getProject)
+  .patch(protect,restrictTo("project_manager") , projectController.updateProject)
+  .delete(protect,restrictTo("project_manager") , projectController.deleteProject);
 
 module.exports = router;

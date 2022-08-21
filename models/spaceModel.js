@@ -14,14 +14,7 @@ const spaceSchema = new mongoose.Schema(
   }
 );
 
-// spaceSchema.pre(/^find/, function (next) {
-//   this.populate({
-//     path: "createdBy",
-//     select: "-__v -user",
-//   });
 
-//   next();
-// });
 
 spaceSchema.virtual("spaces", {
   ref: "Project",

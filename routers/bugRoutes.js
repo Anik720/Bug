@@ -8,14 +8,24 @@ const authController = require("../controllers/authController");
 const protect = require("../middlewares/protect");
 const restrictTo = require("../middlewares/restrictTo");
 
-router.route("/userAction/:id").patch(protect, bugController.userAction);
+router
+  .route("/userAction/:id")
+  .patch(protect, restrictTo("project_manager"), bugController.userAction);
 
 router
   .route("/getuserfromprojectbug")
-  .get(protect, bugController.getUserFromProjectBug);
+  .get(
+    protect,
+    restrictTo("project_manager"),
+    bugController.getUserFromProjectBug
+  );
 router
   .route("/getallbugsunderprojectmanager")
-  .get(protect, bugController.getAllBugsUnderProjectManager);
+  .get(
+    protect,
+    restrictTo("project_manager"),
+    bugController.getAllBugsUnderProjectManager
+  );
 
 router
   .route("/getbugbyloggedinuser")
@@ -26,25 +36,21 @@ router
 router
   .route("/allbugcurrentstatus")
   .get(protect, bugController.allBugCurrentStatus);
-router
-  .route("/practice/:id")
-  .get(protect, bugController.practice);
+router.route("/practice/:id").get(protect, bugController.practice);
 
-
-
-router.route("/").get(bugController.getAllBug).post(
+router.route("/").get(protect,restrictTo("project_manager") , bugController.getAllBug).post(
   protect,
-
+  restrictTo("project_manager") ,
   bugController.createBug
 );
 
 router
   .route("/:id")
-  .get(bugController.getBug)
+  .get(protect,restrictTo("project_manager") ,bugController.getBug)
   .patch(
     protect,
-
+    restrictTo("project_manager") ,
     bugController.updateBug
   )
-  .delete(bugController.deleteBug);
+  .delete(protect,restrictTo("project_manager") ,bugController.deleteBug);
 module.exports = router;
