@@ -1,8 +1,9 @@
-const mongoose = require('mongoose');
-const dotenv = require('dotenv').config({ path: './config.env' });
-const colors = require('colors');
-const DBConnect = require('./utils/dbConnect');
-const express=require('express')
+const mongoose = require("mongoose");
+const dotenv = require("dotenv").config({ path: "./config.env" });
+const colors = require("colors");
+const DBConnect = require("./utils/dbConnect");
+const express = require("express");
+
 
 // process.on('uncaughtException', (error) => {
 //   // using uncaughtException event
@@ -11,10 +12,12 @@ const express=require('express')
 //   process.exit(1); //  emidiatly exists all from all the requests
 // });
 
-const app = require('./app');
+const app = require("./app");
 
 // database connection
 DBConnect();
+
+
 
 // server
 const port = process.env.PORT || 7000;
